@@ -5,33 +5,22 @@ Returns a predefined response. Replace logic and configuration as needed.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any, Dict
 
 from langgraph.graph import StateGraph
 from langgraph.runtime import Runtime
-from typing_extensions import TypedDict
+from langchain_openai import ChatOpenAI
 
+from agent.state import (
+    Context,
+    InputState,
+    State,
+)
 
-class Context(TypedDict):
-    """Context parameters for the agent.
-
-    Set these when creating assistants OR when invoking the graph.
-    See: https://langchain-ai.github.io/langgraph/cloud/how-tos/configuration_cloud/
-    """
-
-    my_configurable_param: str
-
-
-@dataclass
-class State:
-    """Input state for the agent.
-
-    Defines the initial structure of incoming data.
-    See: https://langchain-ai.github.io/langgraph/concepts/low_level/#state
-    """
-
-    changeme: str = "example"
+from agent.utils import (
+    get_llm_api_key,
+    get_search_api_key,
+)
 
 
 async def call_model(state: State, runtime: Runtime[Context]) -> Dict[str, Any]:
@@ -39,6 +28,26 @@ async def call_model(state: State, runtime: Runtime[Context]) -> Dict[str, Any]:
 
     Can use runtime context to alter behavior.
     """
+    print('---- call model')
+    #print(get_llm_api_key())
+    
+    llm = ChatOpenAI(
+        model="gpt-5-nano",
+        # stream_usage=True,
+        # temperature=None,
+        # max_tokens=None,
+        # timeout=None,
+        # reasoning_effort="low",
+        # max_retries=2,
+        api_key=get_llm_api_key(),
+        # base_url="...",
+        # organization="...",
+        # other params...
+    )
+    
+    ai_msg = llm.invoke(state.messages)
+    print(ai_msg)
+    
     return {
         "changeme": "output from call_model. "
         f"Configured with {(runtime.context or {}).get('my_configurable_param')}"
@@ -47,7 +56,7 @@ async def call_model(state: State, runtime: Runtime[Context]) -> Dict[str, Any]:
 
 # Define the graph
 graph = (
-    StateGraph(State, context_schema=Context)
+    StateGraph(State, input=InputState, context_schema=Context)
     .add_node(call_model)
     .add_edge("__start__", "call_model")
     .compile(name="Deep Research Agent")
