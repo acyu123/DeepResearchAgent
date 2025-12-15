@@ -29,10 +29,11 @@ async def call_model(state: State, runtime: Runtime[Context]) -> Dict[str, Any]:
     Can use runtime context to alter behavior.
     """
     print('---- call model')
-    #print(get_llm_api_key())
+    print(get_llm_api_key())
+    print(state)
     
     llm = ChatOpenAI(
-        model="gpt-5-nano",
+        model="gpt-4.1-mini",
         # stream_usage=True,
         # temperature=None,
         # max_tokens=None,
@@ -45,12 +46,12 @@ async def call_model(state: State, runtime: Runtime[Context]) -> Dict[str, Any]:
         # other params...
     )
     
-    ai_msg = llm.invoke(state.messages)
+    ai_msg = llm.invoke(state['messages'])
     print(ai_msg)
     
     return {
-        "changeme": "output from call_model. "
-        f"Configured with {(runtime.context or {}).get('my_configurable_param')}"
+        "messages": [ai_msg],
+        "changeme": ai_msg.text,
     }
 
 
