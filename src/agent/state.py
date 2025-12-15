@@ -1,19 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+import operator
+from dataclasses import dataclass, field
+from typing_extensions import Annotated
 
 from langgraph.graph import MessagesState
 from typing_extensions import TypedDict
 
-
-class Context(TypedDict):
-    """Context parameters for the agent.
-
-    Set these when creating assistants OR when invoking the graph.
-    See: https://langchain-ai.github.io/langgraph/cloud/how-tos/configuration_cloud/
-    """
-
-    my_configurable_param: str
 
 @dataclass
 class InputState(MessagesState):
@@ -22,6 +15,7 @@ class InputState(MessagesState):
     Defines the initial structure of incoming data.
     See: https://langchain-ai.github.io/langgraph/concepts/low_level/#state
     """
+    
 
 @dataclass
 class State(MessagesState):
@@ -30,6 +24,10 @@ class State(MessagesState):
     Defines the initial structure of incoming data.
     See: https://langchain-ai.github.io/langgraph/concepts/low_level/#state
     """
-
-    changeme: str = "example"
+    
+    topic: str = field(default=None)  # Research topic
+    clarification_messages: Annotated[list, operator.add] = field(default_factory=list)
+    needs_clarification: bool = field(default=False)
+    queries: Annotated[list, operator.add] = field(default_factory=list)
+    search_results: Annotated[list, operator.add] = field(default_factory=list)
     

@@ -1,40 +1,44 @@
 clarification_prompt="""
-You are a research planning assistant. Your task is to decide whether the user's research request is clear enough to generate web search queries.
+You are a research planning assistant. Your task is to decide whether the user's research request and clarifications are clear enough to generate web search queries.
+Try to use the questions and answers in the provided clarifications to resolve unclear requests.
 
 Today's date: {date}
 
 A request is UNCLEAR if:
-- There are unfamiliar acronyms, abbreviations, or unknown terms
-- The topic is vague or underspecified
-- Multiple interpretations are equally plausible
-- The request depends on unstated preferences
+- There are unfamiliar acronyms, abbreviations, or unknown terms not defined in the clarifications
+- The topic is vague or underspecified despite the clarifications
+- Multiple interpretations are equally plausible based on the clarifications
+- The request depends on unstated preferences not answered in the clarifications
 
 If the request is CLEAR:
 - Respond with valid JSON:
-  {
+  {{
     "needs_clarification": false
-  }
+  }}
 
 If the request is UNCLEAR:
 - Ask a single, concise clarification question that would most improve the quality of the research
 - Respond with valid JSON:
-  {
+  {{
     "needs_clarification": true,
     "clarification_question": "<your question>"
-  }
+  }}
 
 User request:
 "{user_prompt}"
+
+Clarifications:
+{messages}
 
 Respond with JSON only. Do not include any additional text.
 """
 
 query_generation_prompt="""
-You are a research planning assistant. Your task is to generate exactly {N} web search queries that together provide comprehensive coverage of the user's research request and clarification messages exchanged between you and the user.
+You are a research planning assistant. Your task is to generate exactly {num_queries} web search query that provide comprehensive coverage of the user's research request and clarification messages exchanged between you and the user.
 
 Today's date: {date}
 
-Guidelines:
+Requirements:
 - Queries should be short and concise
 - All details from the user request and messages must be covered by the set of queries
 - Each query should focus on a distinct aspect, perspective, or subtopic
@@ -61,14 +65,16 @@ Clarification messages:
 
 Respond with valid JSON in the following format:
 
-{
+{{
   "search_queries": [
     "query 1",
     "query 2",
     "...",
     "query N"
   ]
-}
+}}
+
+The results MUST only contain {num_queries} queries.
 
 Respond with JSON only. Do not include any additional text.
 """
@@ -115,14 +121,14 @@ Requirements:
 
 Respond with valid JSON in the following format:
 
-{
+{{
   "knowledge_gaps": [
     "<brief description of gap 1>",
     "<brief description of gap 2>",
     "..."
   ],
   "follow_up_question": "<single best question>"
-}
+}}
 
 Respond with JSON only. Do not include any additional text.
 
