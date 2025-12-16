@@ -16,7 +16,7 @@ from langchain_core.messages import (
     SystemMessage,
 )
 from langchain_core.runnables import RunnableConfig
-from langgraph.types import Command
+from langgraph.types import Command, Send, Overwrite
 
 from agent.state import (
     InputState,
@@ -34,6 +34,8 @@ from agent.utils import (
 from agent.prompts import (
     clarification_prompt,
     query_generation_prompt,
+    notes_prompt,
+    followup_prompt,
 )
 
 from agent.config import (
@@ -116,10 +118,14 @@ async def query_generation(state: State, config: RunnableConfig) -> Dict[str, An
     configurable = Configuration.from_runnable_config(config)
     print(configurable)
     
+    topic = state['topic']
+    if 'needs_followup' in state and state['needs_followup']:
+        topic = state['follow_up_question']
+    
     prompt = query_generation_prompt.format(
         num_queries=configurable.num_queries,
-        date=get_current_date(), 
-        user_prompt=state['topic'],
+        date=get_current_date(),
+        user_prompt=topic,
         messages=format_clarification_messages(state['clarification_messages'])
     )
     
@@ -130,6 +136,7 @@ async def query_generation(state: State, config: RunnableConfig) -> Dict[str, An
     
     return {
         "queries": response['search_queries'],
+        "needs_followup": False,
     }
 
 async def search_results_extraction(state: State, config: RunnableConfig) -> Dict[str, Any]:
@@ -142,13 +149,23 @@ async def search_results_extraction(state: State, config: RunnableConfig) -> Dic
     
     configurable = Configuration.from_runnable_config(config)
     
+    search_results = []
     for query in state['queries']:
-        get_search_results(query, configurable.num_results_per_query)
+        search_results.extend(get_search_results(query, configurable.num_results_per_query))
     
     return {
-        "messages": [ai_msg],
-        "changeme": ai_msg.text,
+        "search_results": search_results,
     }
+
+# Conditional edge function to create summarize workers that each summarize a search result
+def assign_workers(state: State):
+    """Assign a worker to each search result"""
+
+    # Kick off section writing in parallel via Send() API
+    return [Send("summarize", {
+        "source": s, 
+        "topic": state['topic'],
+    }) for s in state["search_results"]]
 
 async def summarize(state: State, config: RunnableConfig) -> Dict[str, Any]:
     """Process input and returns output.
@@ -158,11 +175,67 @@ async def summarize(state: State, config: RunnableConfig) -> Dict[str, Any]:
     print('---- search_results_extraction')
     print(state)
     
+    source = state['source']
+    
+    prompt = notes_prompt.format(
+        user_prompt=state['topic'],
+        search_result=source['content']
+    )
+    
+    response = call_llm(prompt, return_json=False)
+    
     return {
-        "messages": [ai_msg],
-        "changeme": ai_msg.text,
+        "notes": [{'title': source['title'], 'url': source['url'], 'notes': response.text}],
     }
 
+
+async def followup(state: State, config: RunnableConfig) -> Dict[str, Any]:
+    """Process input and returns output.
+
+    Can use runtime context to alter behavior.
+    """
+    print('---- followup')
+    print(state)
+    
+    notes = ""
+    for source in state['notes']:
+        notes += '\n'+source['title']+' ('+source['url']+'):'+'\n'+source['notes']+'\n'
+    
+    prompt = followup_prompt.format(
+        user_prompt=state['topic'],
+        summary=notes,
+    )
+    
+    response = call_llm(prompt, return_json=True)
+    
+    print(response)
+    
+    num_followup = 0
+    if 'num_followup_attempts' in state:
+        num_followup = state['num_followup_attempts']
+    if response['needs_followup']:
+        num_followup += 1
+    
+    return {
+        "needs_followup": response['needs_followup'],
+        "follow_up_question": response['follow_up_question'],
+        "num_followup_attempts": num_followup,
+    }
+    
+def route_followup(
+    state: State, config: RunnableConfig
+):
+    print(state)
+    configurable = Configuration.from_runnable_config(config)
+    
+    if configurable.max_followup_retries == 0:
+        return False
+    if 'num_followup_attempts' in state and state['num_followup_attempts'] > configurable.max_followup_retries:
+        return False
+        
+    return 'needs_followup' in state and state['needs_followup']
+    
+    
 async def final_report(state: State, config: RunnableConfig) -> Dict[str, Any]:
     """Process input and returns output.
 
@@ -176,29 +249,7 @@ async def final_report(state: State, config: RunnableConfig) -> Dict[str, Any]:
         "changeme": ai_msg.text,
     }
 
-async def followup(state: State, config: RunnableConfig) -> Command[Literal["query_generation", "__end__"]]:
-    """Process input and returns output.
 
-    Can use runtime context to alter behavior.
-    """
-    print('---- followup')
-    print(state)
-    
-    
-    response = call_llm(prompt)
-    
-    if response.should_followup:
-        # End with clarifying question for user
-        return Command(
-            goto="query_generation", 
-            update={"messages": [AIMessage(content=response.question)], "topic": topic}
-        )
-    else:
-        # Proceed to research with verification message
-        return Command(
-            goto=END, 
-            update={"messages": []}
-        )
 
 
 
@@ -209,14 +260,16 @@ graph = (
     .add_node(query_generation)
     .add_node(search_results_extraction)
     .add_node(summarize)
-    .add_node(final_report)
     .add_node(followup)
+    .add_node(final_report)
+    
     .add_edge("__start__", "clarification")
     .add_conditional_edges("clarification", route_clarification, {True: END, False: "query_generation"})
     .add_edge("query_generation", "search_results_extraction")
-    .add_edge("search_results_extraction", "summarize")
-    .add_edge("summarize", "final_report")
-    .add_edge("final_report", "followup")
-    .add_edge("followup", END)
+    .add_conditional_edges("search_results_extraction", assign_workers, ["summarize"])
+    .add_edge("summarize", "followup")
+    .add_conditional_edges("followup", route_followup, {True: "query_generation", False: "final_report"})
+    .add_edge("final_report", END)
+    
     .compile(name="Deep Research Agent")
 )

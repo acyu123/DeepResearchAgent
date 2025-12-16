@@ -80,7 +80,7 @@ Respond with JSON only. Do not include any additional text.
 """
 
 notes_prompt="""
-You are a research assistant synthesizing information from web sources. Your task is to generate a high-quality notes from the provided content.
+You are a research assistant synthesizing information from a web source. Your task is to generate a concise notes from the provided content.
 
 Requirements:
 - Highlight relevant information related to the user topic from the content
@@ -99,18 +99,20 @@ User topic:
 "{user_prompt}"
 
 Content:
-{search_results}
+{search_result}
 """
 
 followup_prompt="""
 You are a research assistant reviewing information collected about a topic.
 
 Goal:
+- Determine if the information collected is sufficient for writing a report about the topic
 - Identify knowledge gaps or areas that need deeper exploration
 - Generate a follow-up question that would help expand your understanding
 - Focus on technical details, implementation specifics, or emerging trends that weren't fully covered
 
 Requirements:
+- Only needs followup if the information is insufficient
 - Ensure the follow-up question is self-contained and includes necessary context for web search.
 - Base your analysis strictly on the provided information
 - Do NOT introduce external facts or assumptions
@@ -122,11 +124,7 @@ Requirements:
 Respond with valid JSON in the following format:
 
 {{
-  "knowledge_gaps": [
-    "<brief description of gap 1>",
-    "<brief description of gap 2>",
-    "..."
-  ],
+  "needs_followup": true,
   "follow_up_question": "<single best question>"
 }}
 

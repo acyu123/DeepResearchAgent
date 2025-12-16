@@ -10,7 +10,8 @@ class Configuration:
     
     max_clarification_retries: int = 0 # Maximum number of times to ask for clarification
     num_queries: int = 1 # Number of queries to generate
-    num_results_per_query: int = 5 # Maximum number of results to fetch per query
+    num_results_per_query: int = 3 # Maximum number of results to fetch per query
+    max_followup_retries: int = 1 # Maximum number of times to followup
 
     @classmethod
     def from_runnable_config(

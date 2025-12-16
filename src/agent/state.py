@@ -28,6 +28,11 @@ class State(MessagesState):
     topic: str = field(default=None)  # Research topic
     clarification_messages: Annotated[list, operator.add] = field(default_factory=list)
     needs_clarification: bool = field(default=False)
-    queries: Annotated[list, operator.add] = field(default_factory=list)
-    search_results: Annotated[list, operator.add] = field(default_factory=list)
+    queries: list = field(default=list)
+    search_results: list = field(default=list)
+    source: dict = field(default_factory=dict)
+    notes: Annotated[list, operator.add] = field(default_factory=list)
+    needs_followup: bool = field(default=False)
+    follow_up_question: str = field(default=None)
+    num_followup_attempts: int = field(default=0)
     
