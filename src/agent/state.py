@@ -35,4 +35,5 @@ class State(MessagesState):
     needs_followup: bool = field(default=False)
     follow_up_question: str = field(default=None)
     num_followup_attempts: int = field(default=0)
+    final_report: str = field(default=None)
     

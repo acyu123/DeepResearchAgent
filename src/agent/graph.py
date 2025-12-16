@@ -29,6 +29,7 @@ from agent.utils import (
     get_current_date,
     format_clarification_messages,
     get_search_results,
+    format_research_notes,
 )
 
 from agent.prompts import (
@@ -36,6 +37,7 @@ from agent.prompts import (
     query_generation_prompt,
     notes_prompt,
     followup_prompt,
+    report_generation_prompt,
 )
 
 from agent.config import (
@@ -49,9 +51,15 @@ async def clarification(state: State, config: RunnableConfig) -> Dict[str, Any]:
     Can use runtime context to alter behavior.
     """
     print('---- clarification')
-    print(state)
     
     configurable = Configuration.from_runnable_config(config)
+    
+    if 'needs_clarification' not in state or not state['needs_clarification']:
+        if 'topic' in state and 'final_report' in state:
+            return {
+                "follow_up_question": state['messages'][-1].text,
+                "needs_followup": True,
+            }
     
     new_clarification_messages = []
     
@@ -63,11 +71,17 @@ async def clarification(state: State, config: RunnableConfig) -> Dict[str, Any]:
     
     
     if len(state['clarification_messages'])+1 >= configurable.max_clarification_retries * 2:
-        return {
-            'clarification_messages': new_clarification_messages,
-            "topic": topic, 
-            'needs_clarification': False,
-        }
+        if new_clarification_messages:
+            return {
+                'clarification_messages': new_clarification_messages,
+                "topic": topic, 
+                'needs_clarification': False,
+            }
+        else:
+            return {
+                "topic": topic, 
+                'needs_clarification': False,
+            }
     
     clarification_messages = format_clarification_messages(state['clarification_messages'] + new_clarification_messages)
     
@@ -77,11 +91,7 @@ async def clarification(state: State, config: RunnableConfig) -> Dict[str, Any]:
         messages=clarification_messages
     )
     
-    print(prompt)
-    
-    
     response = call_llm(prompt, return_json=True)
-    print(response)
     
     
     if response['needs_clarification']:
@@ -103,7 +113,6 @@ async def clarification(state: State, config: RunnableConfig) -> Dict[str, Any]:
 def route_clarification(
     state: State, config: RunnableConfig
 ):
-    print(state)
     return 'needs_clarification' in state and state['needs_clarification']
     
 
@@ -113,10 +122,8 @@ async def query_generation(state: State, config: RunnableConfig) -> Dict[str, An
     Can use runtime context to alter behavior.
     """
     print('---- query_generation')
-    print(state)
     
     configurable = Configuration.from_runnable_config(config)
-    print(configurable)
     
     topic = state['topic']
     if 'needs_followup' in state and state['needs_followup']:
@@ -129,13 +136,13 @@ async def query_generation(state: State, config: RunnableConfig) -> Dict[str, An
         messages=format_clarification_messages(state['clarification_messages'])
     )
     
-    print(prompt)
     
     response = call_llm(prompt, return_json=True)
-    print(response)
+    
+    queries = response['search_queries']
     
     return {
-        "queries": response['search_queries'],
+        "queries": queries[:configurable.num_queries],
         "needs_followup": False,
     }
 
@@ -145,7 +152,6 @@ async def search_results_extraction(state: State, config: RunnableConfig) -> Dic
     Can use runtime context to alter behavior.
     """
     print('---- search_results_extraction')
-    print(state)
     
     configurable = Configuration.from_runnable_config(config)
     
@@ -173,7 +179,6 @@ async def summarize(state: State, config: RunnableConfig) -> Dict[str, Any]:
     Can use runtime context to alter behavior.
     """
     print('---- search_results_extraction')
-    print(state)
     
     source = state['source']
     
@@ -195,11 +200,8 @@ async def followup(state: State, config: RunnableConfig) -> Dict[str, Any]:
     Can use runtime context to alter behavior.
     """
     print('---- followup')
-    print(state)
     
-    notes = ""
-    for source in state['notes']:
-        notes += '\n'+source['title']+' ('+source['url']+'):'+'\n'+source['notes']+'\n'
+    notes = format_research_notes(state['notes'])
     
     prompt = followup_prompt.format(
         user_prompt=state['topic'],
@@ -208,7 +210,6 @@ async def followup(state: State, config: RunnableConfig) -> Dict[str, Any]:
     
     response = call_llm(prompt, return_json=True)
     
-    print(response)
     
     num_followup = 0
     if 'num_followup_attempts' in state:
@@ -225,7 +226,6 @@ async def followup(state: State, config: RunnableConfig) -> Dict[str, Any]:
 def route_followup(
     state: State, config: RunnableConfig
 ):
-    print(state)
     configurable = Configuration.from_runnable_config(config)
     
     if configurable.max_followup_retries == 0:
@@ -242,11 +242,20 @@ async def final_report(state: State, config: RunnableConfig) -> Dict[str, Any]:
     Can use runtime context to alter behavior.
     """
     print('---- final_report')
-    print(state)
+    
+    notes = format_research_notes(state['notes'])
+    
+    prompt = report_generation_prompt.format(
+        user_prompt=state['topic'],
+        research_notes=notes,
+    )
+    
+    response = call_llm(prompt, return_json=False)
+    
 
     return {
-        "messages": [ai_msg],
-        "changeme": ai_msg.text,
+        "messages": [response.text],
+        "final_report": response.text,
     }
 
 

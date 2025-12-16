@@ -88,7 +88,7 @@ Requirements:
 - Base all notes strictly on the provided content
 - Do NOT introduce external knowledge or assumptions
 - Extract factual claims, key arguments, and important statistics
-- Note areas of agreement or disagreement between sources, if any
+- The notes should be short, concise, and focused
 
 Formatting:
 - Start directly with the notes, without preamble or titles. Do not use XML tags in the output.

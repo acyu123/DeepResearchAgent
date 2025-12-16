@@ -64,3 +64,9 @@ def get_search_results(query, max_results):
     print(results)
     
     return [{'title': r['title'], 'url': r['url'], 'content': r['raw_content']} for r in results]
+
+def format_research_notes(notes):
+    result = ""
+    for source in notes:
+        result += '\n'+source['title']+' ('+source['url']+'):'+'\n'+source['notes']+'\n'
+    return result
