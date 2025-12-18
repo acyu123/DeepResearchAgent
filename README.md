@@ -1,6 +1,6 @@
 # Deep Research Agent
 
-This is a simple deep research agent implemented with LangGraph, with clarification and follow-up capabilities. It uses OpenAI models and the [Tavily API](https://www.tavily.com/).
+This is a simple deep research agent implemented with LangGraph, with clarification and follow-up capabilities. It uses OpenAI models (default: `gpt-4.1-nano`) and the [Tavily API](https://www.tavily.com/).
 
 <div align="center">
   <img src="./static/agent-graph.png" alt="Graph view in LangGraph studio UI" width="75%" />
