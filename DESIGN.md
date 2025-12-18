@@ -56,8 +56,6 @@ The clarification node could handle situations where the user's topic is too vag
 
 The followup node would check the summary of the search results to determine if the information is sufficient for writing the report, identifying knowledge gaps. It would generate a followup question to do further research on the topic. This allows the agent to do multiple rounds of searches. If there are knowledge gaps, it automatically searches for more information.
 
-I evaluated my agent using a subset of 10 examples from the [Deep Research Bench](https://huggingface.co/spaces/Ayanami0730/DeepResearch-Leaderboard). Without clarification and followup, many of the examples only scored 4/5 ([see results](https://smith.langchain.com/o/3152abd8-898f-4c94-a02a-d5f6267af51b/datasets/a8131c65-7c18-48b7-849c-e6a02808c449/compare?selectedSessions=d4bc7629-5638-4b8c-89f5-b420c057db81)). However, with a single round of followup enabled, most of the examples scored 5/5 ([see results](https://smith.langchain.com/o/3152abd8-898f-4c94-a02a-d5f6267af51b/datasets/a8131c65-7c18-48b7-849c-e6a02808c449/compare?selectedSessions=d50bfa32-26cf-42b6-bfb1-25e666db6d42)). This shows that the followup node improves the quality of the final report.
-
 ### Prompt Engineering Considerations
 
 I created the prompts for each node with the help of ChatGPT. This helped make the prompts more thorough and detailed. I tested each prompt in a [Colab Notebook](https://colab.research.google.com/drive/1CPfDI-cpANEjX4aqq5Fw6o9rXv-GW87Y?usp=sharing).
