@@ -70,6 +70,23 @@ To start the evaluation, run the following command:
 # Run evaluation on the Deep Research Bench dataset (10 examples by default)
 python tests/evaluate.py
 ```
+
 This will provide a link to a LangSmith experiment where you can see the results. [See here](https://smith.langchain.com/o/3152abd8-898f-4c94-a02a-d5f6267af51b/datasets/a8131c65-7c18-48b7-849c-e6a02808c449/compare?selectedSessions=d4bc7629-5638-4b8c-89f5-b420c057db81) for the results from a previous run on a subset of 10 examples from the dataset.
 
 By default, it will only evaluate on a subset of 10 examples from the dataset. You can change the `dataset_limit` in `tests/evaluate.py`.
+
+
+## Screenshots
+
+### Graph
+
+<div align="center">
+  <img src="./static/screenshot1.png" alt="Graph view in LangGraph studio UI" width="75%" />
+</div>
+
+### Chat
+
+<div align="center">
+  <img src="./static/screenshot2.png" alt="Graph view in LangGraph studio UI" width="75%" />
+</div>
+
