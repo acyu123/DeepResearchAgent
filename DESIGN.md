@@ -76,7 +76,7 @@ I tested the query generation prompt to make sure that it considered the types o
 
 #### Summarizer prompt
 
-For the summarizer prompt, I initially included the research topic and instructed the LLM to highlight information related to the research topic. However, this caused the LLM to hallucinate summaries that don't actually use the information from the search result. I discovered this problem when I checked the summaries for situations where it failed to get search results that fit the research topic. Instead of generating summaries of the search result, it generated notes related to the research topic that contained information not found in the search result.
+For the summarizer prompt, I initially included the research topic and instructed the LLM to highlight information related to the research topic to tailor the summary to only take note of information useful for the final report. However, this caused the LLM to hallucinate summaries that don't actually use the information from the search result. I discovered this problem when I checked the summaries for situations where it failed to get search results that fit the research topic. Instead of generating notes from the search result, it generated notes related to the research topic that contained information not found in the search result.
 
 For example, with the research topic:
 
@@ -103,7 +103,7 @@ it generated the summary:
 - Such strategies address limitations of CA by enabling more precise control tailored to business-specific request volume fluctuations.
 ```
 
-From this example, we can see that the notes clearly does not use information from the search result, and was instead hallucinated based on the research topic.
+From this example, we can see that the notes clearly do not use information from the search result, and was instead hallucinated based on the research topic.
 
 To prevent this from happening, I removed the research topic from the prompt and only instructed the LLM to generate a summary of the search result without letting it know the research topic. This allows it to generate an accurate summary to make sure the final report only uses information from the search results instead of information hallucinated by the LLM.
 
@@ -169,19 +169,46 @@ At the end of the `final_report` node, I made sure to clear the fields by overwr
 
 ### Latency
 
-The agent take on average 30s to run. This is because it makes multiple LLM calls, which increases latency and cost. This could be improved by batch prompting, reducing the number of search results, or implementing a function that could extract only the main text content from the search results instead of all of the raw content.
+The agent take on average 30s to run. This is because it makes multiple LLM calls, which increases latency and cost. This could be improved by implementing a function that could extract only the main text content from the search results instead of all of the raw content.
 
-### 
+Currently the raw content from the search results are long and noisy. With a program for extracting only the main text, it would shorten the content obtained from the search result, therefore shortening the summarizer prompts.
+
+### LLM hallucination
+
+Currently there aren't any mechanisms preventing the LLM from hallucinating data when generating the summaries or final report. Although I added requirements in the prompts instructing the LLM to only use information from the research notes, the LLM might ignore those instructions and still make up information.
+
+One way to reduce hallucinations would be to call a verifier LLM after generating the final report. This LLM would verify that the report only used information from the research notes and rewrite the report to remove any hallucinations.
+
+Another solution would be to develop a system where it would check each in-line citation in the generated report to find a semantic match in the corresponding search results to ensure that the information did come from the sources.
 
 ## Future Work
 
 ### Handling different types of research topics differently
 
+When designing the query generation prompt, I instructed the model to generate different types of queries depending on the topic domain (eg. academic research versus community advice). This idea could be extended further by adapting additional parts of the agent’s pipeline to be topic-aware.
+
+For example, the agent could include a dedicated routing node that uses an LLM to classify the topic into categories such as breaking news or academic research. Based on this classification, the agent would follow conditional edges to specialized sub-pipelines, each with search result extraction nodes tailored for that category.
+
 #### Breaking News
+
+For research topics about breaking news, the search results need to be recent. For example, the topic `what happened at the bondi beach shooting` would generate search queries such as `Victims and injuries Bondi Beach shooting news`. The search results from that query would contain different casualty counts since some results are not up-to-date. This would prevent the final report from containing the most accurate and up-to-date information. 
+
+To fix this, the search result extraction node for breaking news topics would need to use the most recent results for each query, while it's fine for topics belonging to other categories to use older search results.
 
 #### Academic Papers
 
+If the user wants to use my deep research agent to help write an academic paper, they would only want to cite original research papers or official journal publications. Therefore the search results for this use case should be limited to only results from Google Scholar.
+
+It's possible limit the results to certain domains with the Tavily API (setting the include_domains field to "https://scholar.google.com/") and the SerpAPI can search for results from Google Scholar. Instead of using the raw content from the search results, the search result extraction node would need to extract only the abstract of the paper.
+
+This way, all of the sources for the generated report would come from the abstracts of existing research papers, aligning it with user expectations. There could be a flag in the config where the user could configure the agent to only include academic sources.
+
 ### Allowing followup prompts to edit a final report
 
+Currently, after outputting the final report, if the user inputs another message, it would generate a new report using that message as the research topic. The deep research agent doesn't handle followup prompts if the user wants to make changes to the generated report.
 
+To implement this functionality, there would need to be an LLM that determines whether the user's message indicates that they want to edit the existing report or create a new report. If the user wants to edit the report, there would be a new pipeline for either making changes directly to the final report or querying for additional information.
 
+For example, the LLM handling the message `make the headings more descriptive` would take the existing report as input and rewrite the headings based on the user's message. On the other hand, a message such as `include more quantitative data` would cause the agent to query for additional search results containing the requested information before editing the report.
+
+This would result in a much more complex agent graph with many different paths to handle different choices.
