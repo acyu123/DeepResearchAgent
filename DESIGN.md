@@ -58,7 +58,7 @@ The followup node would check the summary of the search results to determine if 
 
 ### Prompt Engineering Considerations
 
-I created the prompts for each node with the help of ChatGPT. This helped make the prompts more thorough and detailed. I tested each prompt in a [Colab Notebook](https://colab.research.google.com/drive/1CPfDI-cpANEjX4aqq5Fw6o9rXv-GW87Y?usp=sharing).
+I created the prompts for each node with the help of ChatGPT. This helped make the prompts more thorough and detailed. I tested each prompt in a [Colab Notebook](https://colab.research.google.com/drive/1CPfDI-cpANEjX4aqq5Fw6o9rXv-GW87Y?usp=sharing) to make sure that there are enough requirements listed in the prompt to cover different cases and that the LLM output is structured correctly.
 
 #### Query generation prompt
 
