@@ -27,7 +27,7 @@ metadata = {
     "max_clarification_retries": 0, # Maximum number of times to ask for clarification
     "num_queries": 3, # Number of queries to generate
     "num_results_per_query": 2, # Maximum number of results to fetch per query
-    "max_followup_retries": 0, # Maximum number of times to followup
+    "max_followup_retries": 1, # Maximum number of times to followup
 }
 
 class EvaluationScores(BaseModel):
