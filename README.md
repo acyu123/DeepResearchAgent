@@ -8,7 +8,7 @@ This is a simple deep research agent implemented with LangGraph, with clarificat
 
 The core logic defined in `src/agent/graph.py` which defines and compiles a graph with a messages field in state. The users can input their request in the messages, and the final report would be passed as an AI message.
 
-`src/agent/config.py` contains agent settings and preferences that you can modify to change the LLM model used, number of searches, maximum number of clarification retries, maximum number of followup retries.
+`src/agent/config.py` contains agent settings and preferences that you can modify to change the LLM model used, number of searches, maximum number of clarification retries, maximum number of followup retries. Currently clarification and followup are disabled by default.
 
 `src/agent/prompts.py` contains the system prompts used by the nodes in the agent graph.
 
@@ -57,6 +57,8 @@ This agent uses LLMs for a few different tasks:
 - Final Report Generation (default: `openai:gpt-4.1-nano`): Write the final report
 
 You can modify the LLM model and other config settings in `src/agent/config.py`.
+
+Currently the clarification and followup nodes are disabled by default. You can enable them in `src/agent/config.py` by setting `max_clarification_retries` or `max_followup_retries` to a positive number.
 
 ## Evaluation
 
