@@ -22,6 +22,14 @@ Once I got the base template to run correctly, I could build my deep research ag
 
 From the provided instructions, a simple deep research agent would need to take a research topic from the user, do web searches about the topic, and generate a report based on the web search results. 
 
+#### Choosing the LLM model
+
+I chose GPT-4.1 because its 1M-token context window makes it suitable for this use case where the model needs to process long prompts that include the content of entire web pages. According to [OpenAI’s model comparison chart](https://platform.openai.com/docs/models/compare), this context window is larger than those of GPT-5.2 and o4-mini.
+
+A potential drawback of GPT-4.1 is the lack of reasoning capabilities. However, this is acceptable for my use case because each individual LLM call can be completed in a single step. The multi-step reasoning is already handled at the agent level through LangChain.
+
+I chose the nano version of the model because it's the smallest version, making it cheaper and faster than the other versions. When I tested my agent with this version, it seemed powerful enough to generate high-quality results, so this version is sufficient. When I tried using larger models like GPT 4.1-mini and GPT 4.1, it didn't noticibly improve the results.
+
 #### Choosing a search API
 
 To obtain web search results, I chose Tavily as the search API because it is simple to integrate and returns clean, raw text content directly. For other search APIs, such as SerpAPI which only returns links and metadata, I would need to implement an additional content extraction step. Since extracting the main text content from HTML pages is non-trivial due to boilerplate, ads, and other noise, using Tavily allowed me to avoid this complexity. Not all search results from Tavily have raw content, so I added a filter to only keep the ones that do.
