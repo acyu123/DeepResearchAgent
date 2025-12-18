@@ -15,6 +15,10 @@ dependencies = [
     "langchain-tavily",
     "openai>=1.99.2",
     "tavily-python>=0.5.0",
+    "langgraph-cli[inmem]>=0.3.1",
+    "langsmith>=0.3.37",
+    "pandas>=2.3.1",
+    "pydantic>=2.10.2",
 ]
 
 
