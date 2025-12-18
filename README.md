@@ -16,7 +16,7 @@ The core logic defined in `src/agent/graph.py` which defines and compiles a grap
 
 `src/agent/utils.py` contains helper functions used by the nodes in the agent, such as calling the OpenAI API or the search API
 
-## Getting Started
+## Quickstart
 
 1. Clone the repository and activate a virtual environment:
 
