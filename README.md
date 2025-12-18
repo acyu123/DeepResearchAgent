@@ -75,6 +75,10 @@ This will provide a link to a LangSmith experiment where you can see the results
 
 By default, it will only evaluate on a subset of 10 examples from the dataset. You can change the `dataset_limit` in `tests/evaluate.py`.
 
+## Example Output
+
+- [Example Output](./static/example-output.md) for prompt `From 2020 to 2050, how many elderly people will there be in Japan? What is their consumption potential across various aspects such as clothing, food, housing, and transportation? Based on population projections, elderly consumer willingness, and potential changes in their consumption habits, please produce a market size analysis report for the elderly demographic.`
+- [Example Output](./static/example-output2.md) for prompt `What are the investment philosophies of Duan Yongping, Warren Buffett, and Charlie Munger?`
 
 ## Screenshots
 
